@@ -6,3 +6,7 @@
     padding-left: 10% ;  
 
 }
+
+.flex {
+    display: flex; 
+}
