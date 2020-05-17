@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Table, Date, Float, MetaData
+from setup_books import load_book_data_from_csv
 
 app = Flask(__name__)
 
@@ -35,28 +36,28 @@ class userauth:
     timesloggedin = 0
     username = ''
     auth_failed = False
+    err_msg = ''
 
-    def check_user_or_insert(self, user, passw):
+    def authenticate_user(self, user, passw):
         session['username'] = user
-        if (db.execute("SELECT * FROM users WHERE username = :username AND password = :password", {"username": user,"password": passw}).rowcount == 0): 
-            db.execute("INSERT INTO users (username, password, useruuid, timesloggedin) VALUES (:username, :password, :useruuid, :timesloggedin)", {"username": user, "password": passw, "useruuid": uuid.uuid1(),  "timesloggedin": 1})
-            db.commit()
-            self.timesloggedin = 1 
-            self.username = user
+        result_proxy = db.execute("SELECT * FROM users WHERE username = :username AND password = :password", {"username": user, "password": passw})
+        
+        if (result_proxy.rowcount == 0): 
+            print('USER NOT FOUND OMER!!!!')
+            self.auth_failed = True
+            self.err_msg = 'The username or password you entered is incorrect, please try again. '
+            return False
         else: 
-            result_proxy = db.execute("SELECT * FROM users WHERE username = :username AND password = :password", {"username": user, "password": passw})
             query_dict = self.get_dict_from_resultproxy(result_proxy)
-
             incremented_times_logged = query_dict['timesloggedin'] + 1 
             self.timesloggedin = incremented_times_logged
             self.username = query_dict['username']
             db.execute("UPDATE users SET timesloggedin = :timesloggedin WHERE username = :username", {"timesloggedin": incremented_times_logged, "username": user})
             db.commit()         
-        return
+            return True 
 
     def __init__(self): 
         print("initializing user auth")
-        # self.check_user_or_insert(user, passw)
 
     def get_dict_from_resultproxy(self, result_proxy): 
         ditem = dict() 
@@ -79,8 +80,6 @@ blankuser = userauth()
 def my_form_post():
 
     if request.method == 'POST':
-        print("OMER IN HERE")
-
         #SeSSION LOGIC GOES HERE 
         try:
             session.pop('username', None)
@@ -93,14 +92,13 @@ def my_form_post():
         if userEmail == "" or userPassword =="": 
             return render_template('layout.html', message="Please enter a valid email and password")
         
-        # Registering for a new account 
-        # if ua.is_username_taken(userEmail): 
-        #     return render_template('layout.html', message="That email already has an account registered to it, forgot password?") 
-
-        ua.check_user_or_insert(userEmail, userPassword)
+        if (ua.authenticate_user(userEmail, userPassword)): 
+            return redirect(url_for('fetch_feed'))
+        else: 
+            return render_template('login.html', user = ua)
         #using session, for an already registered user: 
         #redirect(url_for('profile'))
-        return render_template('/login.html', user = ua)
+        
     return render_template('login.html', user=blankuser)
 
 @app.route("/home")
@@ -117,6 +115,31 @@ def home():
 def register():
     if request.method == 'POST':
         print('attempting to register') 
+
+        user_email = request.form['username']
+        user_password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        if (user_email == "" or user_password == "" or confirm_password == ""): 
+            ua.err_msg = "Please enter a valid email and password"
+            ua.auth_failed = True 
+            return render_template('register.html', user=ua)
+
+        if (user_password != confirm_password):
+            ua.err_msg = "The passwords entered don't match!"
+            ua.auth_failed = True 
+            return render_template('register.html', user=ua)
+
+        # Registering for a new account 
+        if ua.is_username_taken(user_email): 
+            ua.err_msg = "That email already has an account registered to it, forgot password?"
+            ua.auth_failed = True 
+            return render_template('register.html', user=ua)
+
+        db.execute("INSERT INTO users (username, password, useruuid, timesloggedin) VALUES (:username, :password, :useruuid, :timesloggedin)", {"username": user_email, "password": user_password, "useruuid": uuid.uuid1(),  "timesloggedin": 1})
+        db.commit()
+
+        return render_template('login.html', user = blankuser)
     return render_template('register.html', user=ua)
 
 @app.route("/signout")
@@ -139,9 +162,7 @@ def fetch_feed():
 def table_exists(name):
     ret = engine.dialect.has_table(engine, name)
     print('Table "{}" exists: {}'.format(name, ret))
-    return ret
-
-
+    return ret 
 
 def init_tables():
     print('Checking/Creating tables... ')
@@ -151,7 +172,11 @@ def init_tables():
     reviews_table_name = 'reviews'
     local_books_file_name = 'books.csv'
     
+    load_book_data = False 
     metadata = MetaData(engine)
+
+    if not table_exists(books_table_name):
+        load_book_data = True 
 
     Table(users_table_name, metadata,
     Column('id', Integer, primary_key=True, nullable=False),
@@ -182,6 +207,9 @@ def init_tables():
     )
 
     metadata.create_all() 
+
+    if load_book_data: 
+        load_book_data_from_csv(local_books_file_name)
 
 @app.before_first_request
 def _run_on_start():
