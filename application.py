@@ -37,6 +37,8 @@ class userauth:
     username = ''
     auth_failed = False
     err_msg = ''
+    search_query = ''
+    placed_search = False
 
     def authenticate_user(self, user, passw):
         session['username'] = user
@@ -72,6 +74,20 @@ class userauth:
     def get_user_data(self, username): 
         rp = db.execute("SELECT * FROM users WHERE username = :username", {"username": username})
         return self.get_dict_from_resultproxy(rp)
+    
+    def process_search_request(self): 
+        if self.search_query =='':
+            return 
+
+        result_proxy = None 
+        if type(self.search_query) is int: 
+            if self.search_query < 9999: 
+                result_proxy = db.execute("SELECT * FROM books WHERE yearpublished LIKE :yearpublished", {"yearpublished": self.search_query})
+        else:
+            result_proxy = db.execute("SELECT * FROM books WHERE author LIKE :author OR title LIKE :title OR isbn LIKE :isbn", {"author": self.search_query, "title": self.search_query, "isbn": self.search_query})
+        
+        return self.get_dict_from_resultproxy(result_proxy)
+        
 
 ua = userauth()
 blankuser = userauth()
@@ -151,12 +167,22 @@ def sign_out():
     session.pop("username", None)
     return redirect(url_for('my_form_post'))
 
-@app.route("/feed")
+@app.route("/feed", methods=['GET', 'POST'])
 def fetch_feed(): 
     username = '' 
+    search_request = ''
+
+    if request.method == 'POST':
+        ua.search_query = search_request = request.form['searcher']
+        ua.placed_search = True 
+        result_dict = ua.process_search_request()
+        
+        print(result_dict)
+
+
     if session.get("username", None) is not None: 
-        username = session.get('username')
-    return render_template('feed.html', user=username)
+        ua.username = username = session.get('username')
+    return render_template('feed.html', user=ua)
 
 
 def table_exists(name):
@@ -209,7 +235,7 @@ def init_tables():
     metadata.create_all() 
 
     if load_book_data: 
-        load_book_data_from_csv(local_books_file_name)
+        load_book_data_from_csv(local_books_file_name, books_table_name, engine)
 
 @app.before_first_request
 def _run_on_start():

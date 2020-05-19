@@ -11,17 +11,21 @@
     </head>
     <body>
         <nav class="navbar navbar-light bg-light">
-            <div>
-                <ul class="navbar-nav mr-auto navbar-brand">
-                        <li class="nav-item active navbar-brand">
-                            <a class="nav-link" href="{{ url_for('home') }}">Home <span class="sr-only">(current)</span></a>
-                        </li>
-                        </ul>
-                <a class="navbar-brand" href="{{ url_for('sign_out') }}">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+              <img src="../static/img/book.jpg"  width="50" height="50" alt="">
+            </a>
+            <!-- Search form -->
+            <form method="POST" class="form-inline">
+                <div style="display: flex;"> 
+                    <img src="../static/img/search.png" style="margin-top:  1%;" width="20" height="20" alt="">
+                    <input class="form-control form-control-sm ml-3 w-100" name="searcher" id="searcher1" type="text" placeholder="Search" aria-label="Search">
+                </div>
+            </form>
+
+            <a class="navbar-brand" href="{{ url_for('sign_out') }}">
                 <button type="button" class="btn btn-warning">Logout</button>
-                </a>
-            </div>
-        </nav>
+            </a>
+          </nav>
         <div style="background-color: yellowgreen; height: 500px" class="container">
             <h3>Here in the feeeeeeed {{ user.username }}!</h3>
 
