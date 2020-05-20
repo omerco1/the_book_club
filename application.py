@@ -7,7 +7,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Table, Date, Float, MetaData
+from sqlalchemy import Column, Integer, String, Table, Date, Float, MetaData, BigInteger
 from setup_books import load_book_data_from_csv
 
 app = Flask(__name__)
@@ -39,6 +39,7 @@ class userauth:
     err_msg = ''
     search_query = ''
     placed_search = False
+    search_results = dict()
 
     def authenticate_user(self, user, passw):
         session['username'] = user
@@ -62,11 +63,13 @@ class userauth:
         print("initializing user auth")
 
     def get_dict_from_resultproxy(self, result_proxy): 
-        ditem = dict() 
+        result = {'items': []}
+        ditem = dict()
         for rowp in result_proxy: 
             for column, value in rowp.items():
                 ditem = {**ditem, **{column: value}}
-        return ditem
+            result['items'].append(ditem)
+        return result
     
     def is_username_taken(self, username): 
         return (db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).rowcount >= 1)
@@ -79,12 +82,21 @@ class userauth:
         if self.search_query =='':
             return 
 
+        search_int = -1 
+        if len(self.search_query) < 5: 
+            try:
+                search_int = int(self.search_query)
+            except:    
+                search_int= -1 
+                
         result_proxy = None 
-        if type(self.search_query) is int: 
-            if self.search_query < 9999: 
-                result_proxy = db.execute("SELECT * FROM books WHERE yearpublished LIKE :yearpublished", {"yearpublished": self.search_query})
+        if search_int != -1: 
+            if search_int < 9999: 
+                print('SEARCHING BY YEAR')
+                result_proxy = db.execute("SELECT * FROM books WHERE yearpublished = :yearpublished", {"yearpublished": search_int})
         else:
-            result_proxy = db.execute("SELECT * FROM books WHERE author LIKE :author OR title LIKE :title OR isbn LIKE :isbn", {"author": self.search_query, "title": self.search_query, "isbn": self.search_query})
+            #result_proxy = db.execute("SELECT * FROM books WHERE author LIKE :author OR title LIKE :title OR isbn LIKE :isbn", {"author": self.search_query, "title": self.search_query, "isbn": self.search_query})
+            result_proxy = db.execute("SELECT * FROM books WHERE author LIKE " + "\'%" + self.search_query + "%\'" + " OR title LIKE "+ "\'%" + self.search_query + "%\'" +" OR isbn LIKE "+ "\'%" + self.search_query + "%\'" )
         
         return self.get_dict_from_resultproxy(result_proxy)
         
@@ -175,15 +187,12 @@ def fetch_feed():
     if request.method == 'POST':
         ua.search_query = search_request = request.form['searcher']
         ua.placed_search = True 
-        result_dict = ua.process_search_request()
+        ua.search_results = ua.process_search_request()
+        print(ua.search_results)
         
-        print(result_dict)
-
-
     if session.get("username", None) is not None: 
         ua.username = username = session.get('username')
     return render_template('feed.html', user=ua)
-
 
 def table_exists(name):
     ret = engine.dialect.has_table(engine, name)
@@ -218,18 +227,18 @@ def init_tables():
     # Create a table with the appropriate Columns
     Table(books_table_name, metadata,
     Column('id', Integer, primary_key=True, nullable=False),
-    Column('yearpublished', Integer, nullable=False),
+    Column('yearpublished', String, nullable=False),
     Column('title', String, nullable=False),
     Column('isbn', String, nullable=False),
     Column('author', String, nullable=False))
 
     Table(reviews_table_name, metadata,
     Column('id', Integer, primary_key=True, nullable=False),
-    Column('datae', Date, nullable=False),
+    Column('data', Date, nullable=False),
     Column('title', String, nullable=False),
     Column('reviewbody', String, nullable=False),
     Column('userid', String, nullable=False),
-    Column('numstars', String, nullable=False)
+    Column('numstars', Integer, nullable=False)
     )
 
     metadata.create_all() 

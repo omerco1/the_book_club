@@ -26,10 +26,17 @@
                 <button type="button" class="btn btn-warning">Logout</button>
             </a>
           </nav>
-        <div style="background-color: yellowgreen; height: 500px" class="container">
-            <h3>Here in the feeeeeeed {{ user.username }}!</h3>
-
-
+        <div class="container">
+            {% for item in user.search_results['items'] %}
+                <div class="media">
+                        <img src="..." class="mr-3" alt="...">
+                        <div class="media-body">
+                          <h5 class="mt-0">{{ item['title'] }}</h5>
+                            {{ item['author']}}
+                            <h1>{{ item['yearpublished']}} </h1>
+                        </div>
+                      </div>
+            {% endfor %}
         </div>
     </body>
 </html>
