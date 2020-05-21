@@ -32,6 +32,15 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
+class book_profile:
+
+    book_data = dict()
+    review_data = dict() 
+
+    def __init__(self): 
+        print("initializing book profile")
+
+    
 class userauth:
     timesloggedin = 0
     username = ''
@@ -39,7 +48,7 @@ class userauth:
     err_msg = ''
     search_query = ''
     placed_search = False
-    search_results = dict()
+    search_results = {}
 
     def authenticate_user(self, user, passw):
         session['username'] = user
@@ -51,7 +60,7 @@ class userauth:
             self.err_msg = 'The username or password you entered is incorrect, please try again. '
             return False
         else: 
-            query_dict = self.get_dict_from_resultproxy(result_proxy)
+            query_dict = self.get_dict_from_resultproxy(result_proxy, True)
             incremented_times_logged = query_dict['timesloggedin'] + 1 
             self.timesloggedin = incremented_times_logged
             self.username = query_dict['username']
@@ -62,21 +71,25 @@ class userauth:
     def __init__(self): 
         print("initializing user auth")
 
-    def get_dict_from_resultproxy(self, result_proxy): 
+    def get_dict_from_resultproxy(self, result_proxy, singleItem): 
         result = {'items': []}
         ditem = dict()
         for rowp in result_proxy: 
             for column, value in rowp.items():
                 ditem = {**ditem, **{column: value}}
             result['items'].append(ditem)
-        return result
+        
+        if singleItem: 
+            return ditem
+        else: 
+            return result
     
     def is_username_taken(self, username): 
         return (db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).rowcount >= 1)
     
     def get_user_data(self, username): 
         rp = db.execute("SELECT * FROM users WHERE username = :username", {"username": username})
-        return self.get_dict_from_resultproxy(rp)
+        return self.get_dict_from_resultproxy(rp, True)
     
     def process_search_request(self): 
         if self.search_query =='':
@@ -93,12 +106,12 @@ class userauth:
         if search_int != -1: 
             if search_int < 9999: 
                 print('SEARCHING BY YEAR')
-                result_proxy = db.execute("SELECT * FROM books WHERE yearpublished = :yearpublished", {"yearpublished": search_int})
+                result_proxy = db.execute("SELECT * FROM books WHERE yearpublished = :yearpublished LIMIT 25", {"yearpublished": search_int})
         else:
             #result_proxy = db.execute("SELECT * FROM books WHERE author LIKE :author OR title LIKE :title OR isbn LIKE :isbn", {"author": self.search_query, "title": self.search_query, "isbn": self.search_query})
-            result_proxy = db.execute("SELECT * FROM books WHERE author LIKE " + "\'%" + self.search_query + "%\'" + " OR title LIKE "+ "\'%" + self.search_query + "%\'" +" OR isbn LIKE "+ "\'%" + self.search_query + "%\'" )
+            result_proxy = db.execute("SELECT * FROM books WHERE author LIKE " + "\'%" + self.search_query + "%\'" + " OR title LIKE "+ "\'%" + self.search_query + "%\'" +" OR isbn LIKE "+ "\'%" + self.search_query + "%\' LIMIT 25" )
         
-        return self.get_dict_from_resultproxy(result_proxy)
+        return self.get_dict_from_resultproxy(result_proxy, False)
         
 
 ua = userauth()
@@ -193,6 +206,18 @@ def fetch_feed():
     if session.get("username", None) is not None: 
         ua.username = username = session.get('username')
     return render_template('feed.html', user=ua)
+
+@app.route("/feed/<int:book_id>/",  methods=['GET', 'POST'])
+def fetch_book(book_id): 
+
+    result_proxy = result_proxy = db.execute("SELECT * FROM books WHERE id = :id", {"id": book_id})
+
+    bp = book_profile()
+
+    bp.book_data = ua.get_dict_from_resultproxy(result_proxy, True)
+    
+    return render_template('book_profile.html', bp=bp)
+
 
 def table_exists(name):
     ret = engine.dialect.has_table(engine, name)

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>  </title>
+        
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/main.css') }}">
+        <!-- <script src="{{ url_for('static',filename='javascriptFileName.js') }}"> </script> -->
+        <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
+        <!--  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
+    </head>
+    <body>
+        <div style="align-content: center;">
+            <nav class="navbar navbar-light bg-light">
+                <div style="display: flex;">
+                    <a class="navbar-brand" href="{{ url_for('home') }}">
+                        <img src="../static/img/book.jpg"  width="50" height="50" alt="">
+                    </a>
+                    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Book Club</h1>
+                </div>
+                <a class="navbar-brand" href="{{ url_for('sign_out') }}">
+                    <button type="button" class="btn btn-warning">Logout</button>
+                </a>
+            </nav>
+        </div>
+
+        <div class='container'>
+            <h1> Welcome to {{ bp.book_data['title'] }}</h1>
+
+        </div> 
+
+    </body>
+</html>

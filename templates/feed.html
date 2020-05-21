@@ -10,33 +10,45 @@
         <!--  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
     </head>
     <body>
-        <nav class="navbar navbar-light bg-light">
-            <a class="navbar-brand" href="{{ url_for('home') }}">
-              <img src="../static/img/book.jpg"  width="50" height="50" alt="">
-            </a>
-            <!-- Search form -->
-            <form method="POST" class="form-inline">
-                <div style="display: flex;"> 
-                    <img src="../static/img/search.png" style="margin-top:  1%;" width="20" height="20" alt="">
-                    <input class="form-control form-control-sm ml-3 w-100" name="searcher" id="searcher1" type="text" placeholder="Search" aria-label="Search">
+        <div style="align-content: center;">
+            <nav class="navbar navbar-light bg-light">
+                <div style="display: flex;">
+                    <a class="navbar-brand" href="{{ url_for('home') }}">
+                    <img src="../static/img/book.jpg"  width="50" height="50" alt="">
+                    </a>
+                    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Book Club</h1>
                 </div>
-            </form>
+                <!-- Search form -->
+                <form method="POST" class="form-inline">
+                    <div style="display: flex;"> 
+                        <img src="../static/img/search.png" style="margin-top:  1%;" width="20" height="20" alt="">
+                        <input class="form-control form-control-sm ml-3 w-100" name="searcher" id="searcher1" type="text" placeholder="Search" aria-label="Search">
+                    </div>
+                </form>
 
-            <a class="navbar-brand" href="{{ url_for('sign_out') }}">
-                <button type="button" class="btn btn-warning">Logout</button>
-            </a>
-          </nav>
-        <div class="container">
-            {% for item in user.search_results['items'] %}
-                <div class="media">
-                        <img src="..." class="mr-3" alt="...">
-                        <div class="media-body">
-                          <h5 class="mt-0">{{ item['title'] }}</h5>
-                            {{ item['author']}}
-                            <h1>{{ item['yearpublished']}} </h1>
+                <a class="navbar-brand" href="{{ url_for('sign_out') }}">
+                    <button type="button" class="btn btn-warning">Logout</button>
+                </a>
+            </nav>
+            
+            <div class="container" style="display: grid; grid-gap: 100px 100px; grid-template-columns: 17% 17% 17% 17%; padding-top: 3%;">
+                {% if user.placed_search %}
+                    {% for item in user.search_results['items'] %}
+                        <div>        
+                            <div class="media" >
+                                <img src="../static/img/bookprofile.png" class="mr-3" width="100" height="100" alt="../static/img/book.png">
+                                <div class="media-body" style="width: 10%;">
+                                    <a href="{{url_for('fetch_book', book_id=item['id'])}}">
+                                            <h5 class="mt-0">  {{ item['title'] }} </h5>
+                                    </a>
+                                    {{ item['author']}}
+                                    <h5 class="mt-0"></h5>{{ item['yearpublished']}} </h5>
+                                </div>
+                            </div>
                         </div>
-                      </div>
-            {% endfor %}
+                    {% endfor %}
+                {% endif %}
+            </div>
         </div>
     </body>
 </html>
