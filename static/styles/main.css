@@ -1,3 +1,7 @@
+.checked {
+    color: orange; 
+}
+
 #login { 
     background-color: blue; 
 }
@@ -44,3 +48,4 @@ color: #ce93d8;
 .active-pink .fa, .active-pink-2 .fa {
 color: #f48fb1;
 }
+

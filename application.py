@@ -4,6 +4,7 @@ from flask import Flask, session, request, redirect, url_for
 from flask_session import Session
 from flask import render_template
 import sqlalchemy
+import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -30,12 +31,16 @@ app.static_folder = 'static'
 Session(app)
 
 engine = create_engine(os.getenv("DATABASE_URL"))
+good_reads_key = os.getenv("GOOD_READS")
 db = scoped_session(sessionmaker(bind=engine))
 
 class book_profile:
 
     book_data = dict()
     review_data = dict() 
+    average_review = 0 
+    average_review_int = 0
+    total_num_reviews = 0
 
     def __init__(self): 
         print("initializing book profile")
@@ -215,6 +220,17 @@ def fetch_book(book_id):
     bp = book_profile()
 
     bp.book_data = ua.get_dict_from_resultproxy(result_proxy, True)
+
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": good_reads_key, "isbns": bp.book_data['isbn']}).json() 
+    print(res)
+
+    rating = res['books'][0]
+
+    bp.average_review = rating['average_rating']
+    bp.average_review_int = int(float(rating['average_rating']))
+    bp.total_num_reviews = rating['ratings_count']
+
+    print('error in fetching good reads api')
     
     return render_template('book_profile.html', bp=bp)
 

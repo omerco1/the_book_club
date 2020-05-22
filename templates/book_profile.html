@@ -4,7 +4,8 @@
         <title>  </title>
         
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/main.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='/static/styles/main.css') }}">
         <!-- <script src="{{ url_for('static',filename='javascriptFileName.js') }}"> </script> -->
         <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
         <!--  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
@@ -13,10 +14,10 @@
         <div style="align-content: center;">
             <nav class="navbar navbar-light bg-light">
                 <div style="display: flex;">
-                    <a class="navbar-brand" href="{{ url_for('home') }}">
-                        <img src="../static/img/book.jpg"  width="50" height="50" alt="">
+                    <a class="navbar-brand" href="{{ url_for('fetch_feed') }}">
+                        <img src="/static/img/book.jpg"  width="55" height="55" alt="">
                     </a>
-                    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Book Club</h1>
+                    <!-- <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Book Club</h1> -->
                 </div>
                 <a class="navbar-brand" href="{{ url_for('sign_out') }}">
                     <button type="button" class="btn btn-warning">Logout</button>
@@ -24,9 +25,29 @@
             </nav>
         </div>
 
-        <div class='container'>
-            <h1> Welcome to {{ bp.book_data['title'] }}</h1>
+        <div class='container' style='padding-top: 3%;'>
+           <div style="display: grid; grid-gap: 2% 2%; grid-template-columns: 40% 50%">
+                <div>
+                    <h1> Welcome to {{ bp.book_data['title'] }}</h1>
+                    <h3> by {{ bp.book_data['author'] }}</h3>
+                        
+                    {% for i in range(1, (bp.average_review_int+1)) %}
+                        <span class="fa fa-star" style="color: orange;"></span>
+                    {% endfor %}
+                    {% for i in range(0, (5-bp.average_review_int)) %}
+                        <span class="fa fa-star"></span>
+                    {% endfor %}
+                    
+                    <h5> {{ bp.average_review }} stars </h5>
+                    <h5> of reviews: {{ bp.total_num_reviews }} </h5>
+                </div>
+                <div>
+                    <h1>Reviews</h1>
+                    
 
+
+                </div>
+            </div>
         </div> 
 
     </body>
