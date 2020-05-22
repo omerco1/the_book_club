@@ -12,12 +12,10 @@
     <body>
         <div style="align-content: center;">
             <nav class="navbar navbar-light bg-light">
-                <div style="display: flex;">
-                    <a class="navbar-brand" href="{{ url_for('home') }}">
-                    <img src="../static/img/book.jpg"  width="50" height="50" alt="">
-                    </a>
-                    <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Book Club</h1>
-                </div>
+                <a class="navbar-brand" style="display: flex;" href="{{ url_for('home') }}">
+                <img src="../static/img/book.jpg"  width="50" height="50" alt="">
+                <h1 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-left: 3%;">Book Club</h1>
+                </a>
                 <!-- Search form -->
                 <form method="POST" class="form-inline">
                     <div style="display: flex;"> 
@@ -32,7 +30,13 @@
             </nav>
             
             <div class="container" style="display: grid; grid-gap: 100px 100px; grid-template-columns: 17% 17% 17% 17%; padding-top: 3%;">
+                
                 {% if user.placed_search %}
+                    {% if user.blank_search %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ user.err_msg }}
+                        </div>
+                    {% endif %}
                     {% for item in user.search_results['items'] %}
                         <div>        
                             <div class="media" >

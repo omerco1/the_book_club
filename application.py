@@ -53,6 +53,7 @@ class userauth:
     err_msg = ''
     search_query = ''
     placed_search = False
+    blank_search = False 
     search_results = {}
 
     def authenticate_user(self, user, passw):
@@ -116,7 +117,15 @@ class userauth:
             #result_proxy = db.execute("SELECT * FROM books WHERE author LIKE :author OR title LIKE :title OR isbn LIKE :isbn", {"author": self.search_query, "title": self.search_query, "isbn": self.search_query})
             result_proxy = db.execute("SELECT * FROM books WHERE author LIKE " + "\'%" + self.search_query + "%\'" + " OR title LIKE "+ "\'%" + self.search_query + "%\'" +" OR isbn LIKE "+ "\'%" + self.search_query + "%\' LIMIT 25" )
         
-        return self.get_dict_from_resultproxy(result_proxy, False)
+        result = self.get_dict_from_resultproxy(result_proxy, False)
+
+        if  not len(result['items']): 
+            self.blank_search = True
+            self.err_msg = "No results found!"
+        else: 
+            self.blank_search = False
+        
+        return result
         
 
 ua = userauth()
@@ -206,6 +215,7 @@ def fetch_feed():
         ua.search_query = search_request = request.form['searcher']
         ua.placed_search = True 
         ua.search_results = ua.process_search_request()
+
         print(ua.search_results)
         
     if session.get("username", None) is not None: 
