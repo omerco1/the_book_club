@@ -5,7 +5,11 @@
         
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='/static/styles/main.css') }}">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/main.css') }}">
+       
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
         <!-- <script src="{{ url_for('static',filename='javascriptFileName.js') }}"> </script> -->
         <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css"> -->
         <!--  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> -->
@@ -26,11 +30,11 @@
         </div>
 
         <div class='container' style='padding-top: 3%;'>
-           <div style="display: grid; grid-gap: 2% 2%; grid-template-columns: 40% 50%">
+           <div style="display: grid; grid-gap: 2% 2%; grid-template-columns: 40% 60%">
                 <div>
                     <h1> Welcome to {{ bp.book_data['title'] }}</h1>
                     <h3> by {{ bp.book_data['author'] }}</h3>
-                        
+
                     {% for i in range(1, (bp.average_review_int+1)) %}
                         <span class="fa fa-star" style="color: orange;"></span>
                     {% endfor %}
@@ -40,10 +44,163 @@
                     
                     <h5> {{ bp.average_review }} stars </h5>
                     <h5> of reviews: {{ bp.total_num_reviews }} </h5>
-                </div>
-                <div>
-                    <h1>Reviews</h1>
+                    <h5> ISBN: {{ bp.book_data['isbn'] }}</h5>
+                    <h5> Published: {{ bp.book_data['yearpublished'] }}</h5>
                     
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#myModal">
+                        Add Review
+                    </button>
+                        
+                    <!-- The Modal -->
+                    <div class="modal" id="myModal">
+                        <style>
+                        .modal-dialog{
+                            overflow-y: initial !important
+                        }
+                        .modal-body{
+                            height: 60%;
+                            overflow-y: auto !important
+                        }
+                        .rate {
+                            float: left;
+                            height: 46px;
+                            padding: 0 10px;
+                        }
+                        .rate:not(:checked) > input {
+                            position:absolute;
+                            top:-9999px;
+                        }
+                        .rate:not(:checked) > label {
+                            float:right;
+                            width:1em;
+                            overflow:hidden;
+                            white-space:nowrap;
+                            cursor:pointer;
+                            font-size:30px;
+                            color:#ccc;
+                        }
+                        .rate:not(:checked) > label:before {
+                            content: '★ ';
+                        }
+                        .rate > input:checked ~ label {
+                            color: #ffc700;    
+                        }
+                        .rate:not(:checked) > label:hover,
+                        .rate:not(:checked) > label:hover ~ label {
+                            color: #deb217;  
+                        }
+                        .rate > input:checked + label:hover,
+                        .rate > input:checked + label:hover ~ label,
+                        .rate > input:checked ~ label:hover,
+                        .rate > input:checked ~ label:hover ~ label,
+                        .rate > label:hover ~ input:checked ~ label {
+                            color: #c59b08;
+                        }
+
+                        </style>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                        
+                    
+
+                    
+                        <div class="modal-header">
+                            <h4 class="modal-title">Write your review</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        
+                        {% if not bp.already_reviewed_book %}
+                            <form method="POST" id="rate_form">
+                                <div class="modal-body">
+                                    <div class="rate form-group" style="padding-bottom: 5%;">
+                                        <input type="radio" id="star5" name="rate" value="5">
+                                        <label for="star5" title="text">5 stars</label>
+                                        <input type="radio"  id="star4" name="rate" value="4">
+                                        <label for="star4" title="text">4 stars</label>
+                                        <input type="radio"  id="star3" name="rate" value="3">
+                                        <label for="star3" title="text">3 stars</label>
+                                        <input type="radio"  id="star2" name="rate" value="2">
+                                        <label for="star2" title="text">2 stars</label>
+                                        <input type="radio"  id="star1" name="rate" value="1">
+                                        <label for="star1" title="text">1 stars</label>
+                                    </div>
+                                    <div class='form-group' style="padding-top: 5%;">
+                                        <input class="form-control form-control-lg" type="text" id="review_title1" name='review_title' placeholder="Review title">
+                                    </div>
+                                    <div class='form-group' style="padding-top: 5%;">
+                                        <textarea class="form-control" id="review_text_area" type='text' rows="3" name="rtext_area" placeholder="Review body"></textarea>
+                                    </div>
+                                </div>  
+                                <script type="text/javascript">
+                                    function form_submit() {
+
+                                        var count = 0; 
+                                        var stars = document.getElementsByName('rate');
+                                    
+                                        for (var i = 0, length = stars.length; i < length; i++) {
+                                            if (stars[i].checked) {
+                                                // do whatever you want with the checked radio
+                                                count = i;
+                                                break; 
+                                            }
+                                        }
+
+                                        count = 5 - count; 
+                                        
+                                        var form=document.getElementById('rate_form');//retrieve the form as a DOM element
+
+                                        var input = document.createElement('input');//prepare a new input DOM element
+                                        input.setAttribute('name', 'num_stars');//set the param name
+                                        input.setAttribute('value', count);//set the value
+                                        input.setAttribute('type', 'text')//set the type, like "hidden" or other
+                                        form.appendChild(input);//append the input to the form
+                                    form.submit();
+                                    }    
+                                </script>
+                            
+                                <div class="modal-footer">
+                                    <button type="submit"  onclick="form_submit()" class="btn btn-warning" >Submit</button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ bp.err_msg }}
+                            </div>
+                        {% endif %}
+
+                        
+                        </div>
+                    </div>
+                    </div>
+      
+                        
+
+                </div>
+                <div class="container border-left border-top shadow p-3 mb-5 bg-#FBF408 rounded">
+                    <h1 style="padding-left: 5%;">Reviews</h1>
+                    {% if bp.no_reviews %}
+                        <h5 style="padding-left: 5%; color: lightgray;">No reviews for this novel!</h5>
+                    {% else %}
+                        {% for item in bp.review_data['items'] %}
+                            <div style="padding-top: 5%; ">        
+                                <div class="media border" >
+                                    <div class="media-body" style="width: 10%; padding-left: 3%;">
+                                        {% for i in range(1, (item['numstars']+1)) %}
+                                            <span class="fa fa-star" style="color: orange;"></span>
+                                        {% endfor %}
+                                        {% for i in range(0, (5-item['numstars'])) %}
+                                            <span class="fa fa-star"></span>
+                                        {% endfor %}
+                                        <h5 class="mt-0">  {{ item['username'] }} - </h5> 
+                                        <h5 class="mt-0">  {{ item['title'] }} </h5>
+                                    
+                                        <p class="mt-0">{{ item['reviewbody']}} </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
 
 
                 </div>

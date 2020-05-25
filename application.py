@@ -38,9 +38,13 @@ class book_profile:
 
     book_data = dict()
     review_data = dict() 
+    username= ''
     average_review = 0 
     average_review_int = 0
     total_num_reviews = 0
+    no_reviews = True
+    already_reviewed_book = False
+    err_msg = ''
 
     def __init__(self): 
         print("initializing book profile")
@@ -61,7 +65,7 @@ class userauth:
         result_proxy = db.execute("SELECT * FROM users WHERE username = :username AND password = :password", {"username": user, "password": passw})
         
         if (result_proxy.rowcount == 0): 
-            print('USER NOT FOUND OMER!!!!')
+            print('USER NOT FOUND!!!!')
             self.auth_failed = True
             self.err_msg = 'The username or password you entered is incorrect, please try again. '
             return False
@@ -89,6 +93,10 @@ class userauth:
             return ditem
         else: 
             return result
+    
+    def select_username_from_uuid(self, uuid): 
+        result_proxy = db.execute("SELECT username FROM users WHERE useruuid = :useruuid", {"useruuid": uuid})
+        return self.get_dict_from_resultproxy(result_proxy, True)
     
     def is_username_taken(self, username): 
         return (db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).rowcount >= 1)
@@ -225,11 +233,47 @@ def fetch_feed():
 @app.route("/feed/<int:book_id>/",  methods=['GET', 'POST'])
 def fetch_book(book_id): 
 
-    result_proxy = result_proxy = db.execute("SELECT * FROM books WHERE id = :id", {"id": book_id})
-
     bp = book_profile()
+    username = '' 
+    if session.get("username", None) is not None: 
+        bp.username = ua.username = username = session.get('username')
 
+    ua.already_reviewed_book = False 
+    user = ua.get_dict_from_resultproxy(db.execute("SELECT * FROM users WHERE username = :username", {"username": username}), True)
+
+    if request.method == 'POST': 
+        num_stars = request.form['num_stars']
+        review_title = request.form['review_title']
+        review_body = request.form['rtext_area']
+
+        result_proxy = db.execute("SELECT * FROM reviews WHERE userid = :useruuid AND bookid = :bookid", {"useruuid": user['useruuid'], 'bookid': book_id})
+
+        if result_proxy.rowcount == 0: 
+            db.execute("INSERT INTO reviews (bookid, title, reviewbody, userid, numstars) VALUES (:bookid, :title, :reviewbody, :userid, :numstars)", {"userid": user['useruuid'], "bookid": book_id, "title": review_title,  "reviewbody": review_body, 'numstars': num_stars})
+            db.commit() 
+            bp.no_reviews = False
+        else: 
+            bp.already_reviewed_book = True
+            bp.err_msg = "You already submitted a review for this novel."
+
+    result_proxy = db.execute("SELECT * FROM books WHERE id = :id", {"id": book_id})
     bp.book_data = ua.get_dict_from_resultproxy(result_proxy, True)
+
+    result_proxy = db.execute("SELECT * FROM reviews WHERE bookid = :id", {"id": book_id})
+    if result_proxy.rowcount == 0: 
+        bp.no_reviews = True
+    else: 
+        bp.no_reviews = False
+        bp.review_data = ua.get_dict_from_resultproxy(result_proxy, False)
+        
+        for item in bp.review_data['items']: 
+            item.update(ua.select_username_from_uuid(item['userid']))
+
+    result_proxy = db.execute("SELECT * FROM reviews WHERE userid = :useruuid AND bookid = :bookid", {"useruuid": user['useruuid'], 'bookid': book_id})
+    if result_proxy.rowcount > 0: 
+        bp.already_reviewed_book = True
+        bp.err_msg = "You already submitted a review for this novel."
+
 
     res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": good_reads_key, "isbns": bp.book_data['isbn']}).json() 
     print(res)
@@ -239,8 +283,6 @@ def fetch_book(book_id):
     bp.average_review = rating['average_rating']
     bp.average_review_int = int(float(rating['average_rating']))
     bp.total_num_reviews = rating['ratings_count']
-
-    print('error in fetching good reads api')
     
     return render_template('book_profile.html', bp=bp)
 
@@ -285,7 +327,7 @@ def init_tables():
 
     Table(reviews_table_name, metadata,
     Column('id', Integer, primary_key=True, nullable=False),
-    Column('data', Date, nullable=False),
+    Column('bookid', Integer, nullable=False),
     Column('title', String, nullable=False),
     Column('reviewbody', String, nullable=False),
     Column('userid', String, nullable=False),
@@ -301,7 +343,3 @@ def init_tables():
 def _run_on_start():
     app.run(debug=True) 
     init_tables()
-
-
-
-    
