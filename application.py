@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Table, Date, Float, MetaData, BigInteger
 from setup_books import load_book_data_from_csv
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -141,7 +142,7 @@ blankuser = userauth()
 
 @app.route('/', methods=['GET', 'POST'])
 def my_form_post():
-
+    session.pop("username", None)
     if request.method == 'POST':
         #SeSSION LOGIC GOES HERE 
         try:
@@ -276,8 +277,6 @@ def fetch_book(book_id):
 
 
     res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": good_reads_key, "isbns": bp.book_data['isbn']}).json() 
-    print(res)
-
     rating = res['books'][0]
 
     bp.average_review = rating['average_rating']
@@ -339,7 +338,84 @@ def init_tables():
     if load_book_data: 
         load_book_data_from_csv(local_books_file_name, books_table_name, engine)
 
+
+@app.route('/api/<string:isbn>', methods=['GET'])
+def isbn_req(isbn):
+
+    if session.get("username", None) is None: 
+        return redirect(url_for('my_form_post'))
+
+    result_proxy = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn})
+
+    if result_proxy.rowcount == 0: 
+        return jsonify({'error': 'Invalid isbn!'}), 404
+
+
+    result = dict() 
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": good_reads_key, "isbns": isbn}).json()
+    gr_res = res['books'][0]
+
+    result.update({'average_rating' : gr_res['average_rating'], 'ratings_count': gr_res['ratings_count']})
+
+    db_book_data = ua.get_dict_from_resultproxy(result_proxy, True)
+
+    result['isbn'] = isbn
+    result['year']= db_book_data['yearpublished']
+    result['author'] = db_book_data['author']
+    result['title'] = db_book_data['title']
+
+    return jsonify(result)
+
 @app.before_first_request
 def _run_on_start():
     app.run(debug=True) 
     init_tables()
+
+
+# Notes for the future: 
+# Defining tables using ORM
+# class Flight(db.Model): 
+#   __tablename__ = "flights"
+#   id = db.Column(db.Integer, primary_key=True)
+#   origin = db.Column(db.String, nullable=False) # These represent the columns
+#   destination = db.Column(db.String, nullable=False)
+#   duration = db.Column(db.Integer, nullable=False)
+#
+# class Passenger(db.Model): 
+#   __tablename__ = "passengers"
+#   id = db.Column(db.Integer, primary_key=True)
+#   name = db.Column(db.String, nullable=False) 
+#   flight_id = db.Column(db.Integer, db.ForeignKey("flights.id"),nullable=False)
+#
+# db.create_all()
+#
+# To INSERT: 
+# db.session.add(Flight(origin='New York',destination='Paris', duration=540))
+#
+# Select * from Flights using ORM:
+# Flight.query.all()
+#
+# Select * From flights where origin = paris: 
+# Flight.query.filter_by(origin='Paris').all()
+#
+# Update flights SET duration = 200 WHERE id = 6 
+# flight = Flight.query.get(6)
+# flight.duration = 200 
+# db.session.commit()
+#
+# Select * from flights JOIN passangers ON flights.id = passengers.flight_id; 
+# db.session.query(Flight, Passenger).filter(Flight.id == Passenger.flight_id).all()
+#
+# Define a relationship on a FLights table (not by actually setting a column) within ORM class 
+# passengers = db.relationship("Passenger", backref="flight", lazy=True)
+#
+# Relationships allow us to simplify associating two tables like so: 
+# Passenger.query.filter_by(name="Alice").first().flight # <-- will return the flight object associated with this passenger
+#
+#
+# API Get requests:
+# 
+# res = request.get(<url>/api/data) # Rather than specifying the params like so (/api/data )you can do this: 
+# res =request.get(<url>, params={'api': api, 'base': base})
+
+
