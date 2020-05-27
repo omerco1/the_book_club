@@ -1,4 +1,4 @@
-# The book club
+# The Book Club Web Application
 
 Web Programming with Python and JavaScript
 
