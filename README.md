@@ -10,9 +10,10 @@ https://book-reviewing-web-app.herokuapp.com/
 This site features a backend API, try it out for youself!
 
 Input: 
-GET <url>/api/<isbn>
+GET <url>/api/*isbn*
   
 Example Output JSON: 
+
 {
     "title": "Memory",
     "author": "Doug Lloyd",
