@@ -366,9 +366,12 @@ def isbn_req(isbn):
 
     return jsonify(result)
 
-@app.before_first_request
-def _run_on_start():
-    app.run(debug=True) 
+# @app.before_first_request
+# def _run_on_start():
+#     app.run(debug=True) 
+    
+if __name__ == '__main__':
+    app.run(port='5200')
     init_tables()
 
 
