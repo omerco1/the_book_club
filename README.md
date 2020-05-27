@@ -24,7 +24,12 @@ Example Output JSON:
 }
 
 
+Login Screen: 
 ![alt text](https://raw.githubusercontent.com/omerco1/the_book_club/master/login_screen.png)
-![alt text](http://url/to/img.png)
-![alt text](http://url/to/img.png)
+
+Feed Example: 
+![alt text](https://raw.githubusercontent.com/omerco1/the_book_club/master/feed.png)
+
+Book Profile Screen: 
+![alt text](https://raw.githubusercontent.com/omerco1/the_book_club/master/book_profile.png)
 
