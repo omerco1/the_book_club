@@ -24,7 +24,7 @@ Example Output JSON:
 }
 
 
-![](./login_screen.png =200x100)
-![](./feed.png =200x100)
-![](./book_profile.png =200x100)
+![alt text](https://raw.githubusercontent.com/omerco1/the_book_club/master/login_screen.png)
+![alt text](http://url/to/img.png)
+![alt text](http://url/to/img.png)
 
