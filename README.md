@@ -24,5 +24,7 @@ Example Output JSON:
 }
 
 
-![image](path)
+![image](./login_screen.png =200x100)
+![image](./feed.png =200x100)
+![image](./book_profile.png =200x100)
 
