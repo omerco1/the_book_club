@@ -16,7 +16,7 @@ itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
-numpy==1.18.4
+numpy==1.22.0
 pandas==1.0.3
 parse==1.12.1
 psycopg2-binary==2.8.5
